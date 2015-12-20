@@ -20,5 +20,5 @@ from django.views.generic import TemplateView
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    url(r'', TemplateView.as_view(template_name="clock.html")),
+    url(r'', TemplateView.as_view(template_name="catastrophe_clock/clock.html")),
 ]
