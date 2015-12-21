@@ -133,3 +133,19 @@ REST_FRAMEWORK = {
 REST_FRAMEWORK = {
     'PAGE_SIZE': 10
 }
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'catastrophe_clock': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+    },
+}
