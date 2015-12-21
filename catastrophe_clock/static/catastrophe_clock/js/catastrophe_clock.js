@@ -29,7 +29,7 @@ var ClockView = Backbone.View.extend({
     initialize: function(options) {
         _.bindAll(this, "render", "template", "update", "convert");
         this.model = options.model || new Backbone.Model();
-        this.catastrophe_collection = options.catastrophe_collection;
+        this.catastrophe_model = options.catastrophe_model || new Backbone.Model();
         this.model.attributes = _.extend({
             days: 0,
             hours: 6,
@@ -42,12 +42,11 @@ var ClockView = Backbone.View.extend({
             self.model.set("seconds", self.model.get("seconds") - 1);
         }, 1000));
         this.listenTo(this.model, "change", this.update);
-        this.listenTo(this.catastrophe_collection, "fetched", this.convert)
+        this.listenTo(this.catastrophe_model, "change", this.convert)
     },
 
     convert: function() {
-        var catastrophe_model = this.catastrophe_collection.findWhere({name: "Miami sinks"});
-        var arrival = new Date(catastrophe_model.get("arrival_date"));
+        var arrival = new Date(this.catastrophe_model.get("arrival_date"));
         var now = Date.now();
         var diff = arrival - now; // In milliseconds
         var diff_secs = Math.floor(diff / 1000);
@@ -77,22 +76,25 @@ var ClockView = Backbone.View.extend({
     }
 });
 
+var DescriptionView = Backbone.View.extend({});
+
 var ContainerView = Backbone.View.extend({
     initialize: function() {
+        _.bindAll(this, "update_subviews");
         this.catastrophe_collection = new CatastropheCollection();
-        this.clock_view = new ClockView({
-            el: this.$("#clock-view-el"),
-            catastrophe_collection: this.catastrophe_collection
-        });
+        this.clock_view = new ClockView({el: this.$("#clock-view-el")});
         this.fetch_catastrophe_collection();
+    },
+
+    update_subviews: function() {
+        var catastrophe_model = this.catastrophe_collection.findWhere({name: "Miami sinks"});
+        this.clock_view.catastrophe_model.set(catastrophe_model.attributes);
     },
 
     fetch_catastrophe_collection: function() {
         var self = this;
         this.catastrophe_collection.fetch({
-            success: function() {
-                self.catastrophe_collection.trigger("fetched");
-            },
+            success: self.update_subviews,
             error: function() {
                 console.log("Couldn't retrieve...");
             }
