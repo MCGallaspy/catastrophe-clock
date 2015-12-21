@@ -20,10 +20,12 @@ from django.views.generic import TemplateView
 
 from rest_framework import routers
 
-from .views import UserViewSet
+from .views import UserViewSet, CatastropheViewSet
 
 router = routers.DefaultRouter()
 router.register(r'users', UserViewSet)
+router.register(r'catastrophes', CatastropheViewSet)
+
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
