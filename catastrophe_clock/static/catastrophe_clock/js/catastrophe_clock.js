@@ -91,7 +91,7 @@ var DescriptionView = Backbone.View.extend({
 
 var FindOutMoreView = Backbone.View.extend({
     events: {
-        "click a": "toggle"
+        "click .find-more-a": "toggle"
     },
 
     initialize: function (options) {
@@ -108,18 +108,22 @@ var FindOutMoreView = Backbone.View.extend({
 
     render: function() {
         if( this.toggled ) {
-            this.$("a").text("Click here to close this description.");
+            this.$(".find-more-a").text("Click here to close this description.");
             this.$(".find-out-more").html(this.model.get("more_info"));
         } else {
-            this.$("a").text("Click here to find out more.");
+            this.$(".find-more-a").text("Click here to find out more.");
             this.$(".find-out-more").html("");
         }
     }
 });
 
 var ContainerView = Backbone.View.extend({
+    events: {
+        "click .dropdown-item": "change_catastrophe_model"
+    },
+
     initialize: function() {
-        _.bindAll(this, "update_subviews");
+        _.bindAll(this, "update_subviews", "render_chooser", "change_catastrophe_model");
         this.catastrophe_collection = new CatastropheCollection();
         this.clock_view = new ClockView({el: this.$("#clock-view-el")});
         this.desc_view = new DescriptionView({el: this.$("#desc-el")});
@@ -128,16 +132,38 @@ var ContainerView = Backbone.View.extend({
     },
 
     update_subviews: function() {
-        var catastrophe_model = this.catastrophe_collection.findWhere({name: "Miami sinks"});
+        var catastrophe_model = this.catastrophe_model;
         this.clock_view.catastrophe_model.set(catastrophe_model.attributes);
         this.desc_view.model.set({description: catastrophe_model.get("description")});
         this.find_out_more_view.model.set({more_info: catastrophe_model.get("more_info")});
+        this.render_chooser();
+    },
+
+    render_chooser: function() {
+        var dropdown_menu = this.$("#chooser-el .dropdown-menu");
+        dropdown_menu.html("");
+        this.catastrophe_collection.forEach(function(catastrophe){
+            var li = $("<li></li>").addClass("dropdown-item");
+            console.log(catastrophe.cid);
+            var a = $("<a href='#'>").attr("data-id", catastrophe.cid).text(catastrophe.get("name"));
+            li.append(a);
+            dropdown_menu.append(li);
+        });
+    },
+
+    change_catastrophe_model: function(ev) {
+        var el = $(ev.target);
+        this.catastrophe_model = this.catastrophe_collection.get(el.attr("data-id"));
+        this.update_subviews();
     },
 
     fetch_catastrophe_collection: function() {
         var self = this;
         this.catastrophe_collection.fetch({
-            success: self.update_subviews,
+            success: function() {
+                self.catastrophe_model = self.catastrophe_collection.findWhere({name: "Miami sinks"});
+                self.update_subviews();
+            },
             error: function() {
                 console.log("Couldn't retrieve...");
             }
