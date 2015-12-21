@@ -76,19 +76,32 @@ var ClockView = Backbone.View.extend({
     }
 });
 
-var DescriptionView = Backbone.View.extend({});
+var DescriptionView = Backbone.View.extend({
+    initialize: function(options){
+        _.bindAll(this, "render")
+        this.model = options.model || new Backbone.Model()
+        this.listenTo(this.model, "change", this.render);
+        this.render()
+    },
+
+    render: function() {
+        this.$(".brief-desc").text(this.model.get("description"));
+    }
+});
 
 var ContainerView = Backbone.View.extend({
     initialize: function() {
         _.bindAll(this, "update_subviews");
         this.catastrophe_collection = new CatastropheCollection();
         this.clock_view = new ClockView({el: this.$("#clock-view-el")});
+        this.desc_view = new DescriptionView({el: this.$("#desc-el")});
         this.fetch_catastrophe_collection();
     },
 
     update_subviews: function() {
         var catastrophe_model = this.catastrophe_collection.findWhere({name: "Miami sinks"});
         this.clock_view.catastrophe_model.set(catastrophe_model.attributes);
+        this.desc_view.model.set({description: catastrophe_model.get("description")});
     },
 
     fetch_catastrophe_collection: function() {
