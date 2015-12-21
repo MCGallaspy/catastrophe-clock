@@ -18,8 +18,16 @@ from django.conf.urls import url, include
 from django.contrib import admin
 from django.views.generic import TemplateView
 
+from rest_framework import routers
+
+from .views import UserViewSet
+
+router = routers.DefaultRouter()
+router.register(r'users', UserViewSet)
+
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    url(r'', TemplateView.as_view(template_name="catastrophe_clock/clock.html")),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+    url(r'^api/', include(router.urls)),
+    url(r'^$', TemplateView.as_view(template_name="catastrophe_clock/clock.html")),
 ]
