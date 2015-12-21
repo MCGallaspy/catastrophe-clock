@@ -27,8 +27,9 @@ var ClockView = Backbone.View.extend({
     template: _.template("<%= days %>:<%= hours %>:<%= minutes %>:<%= seconds %>"),
 
     initialize: function(options) {
-        _.bindAll(this, "render", "template", "update", "convert", "fetch_and_convert");
+        _.bindAll(this, "render", "template", "update", "convert");
         this.model = options.model || new Backbone.Model();
+        this.catastrophe_collection = options.catastrophe_collection;
         this.model.attributes = _.extend({
             days: 0,
             hours: 6,
@@ -36,27 +37,17 @@ var ClockView = Backbone.View.extend({
             seconds: 6
         }, this.model.attributes);
         this.render();
-        this.listenTo(this.model, "change", this.update);
         var self = this;
         $(window.setInterval(function(){
             self.model.set("seconds", self.model.get("seconds") - 1);
         }, 1000));
-        this.fetch_and_convert();
-    },
-
-    fetch_and_convert: function() {
-        this.collection = this.collection || new CatastropheCollection();
-        this.collection.fetch({
-            success: this.convert,
-            error: function() {
-                console.log("Couldn't retrieve...");
-            }
-        });
+        this.listenTo(this.model, "change", this.update);
+        this.listenTo(this.catastrophe_collection, "fetched", this.convert)
     },
 
     convert: function() {
-        this.catastrophe_model = this.collection.at(0);
-        var arrival = new Date(this.catastrophe_model.get("arrival_date"));
+        var catastrophe_model = this.catastrophe_collection.findWhere({name: "Miami sinks"});
+        var arrival = new Date(catastrophe_model.get("arrival_date"));
         var now = Date.now();
         var diff = arrival - now; // In milliseconds
         var diff_secs = Math.floor(diff / 1000);
@@ -86,6 +77,29 @@ var ClockView = Backbone.View.extend({
     }
 });
 
+var ContainerView = Backbone.View.extend({
+    initialize: function() {
+        this.catastrophe_collection = new CatastropheCollection();
+        this.clock_view = new ClockView({
+            el: this.$("#clock-view-el"),
+            catastrophe_collection: this.catastrophe_collection
+        });
+        this.fetch_catastrophe_collection();
+    },
+
+    fetch_catastrophe_collection: function() {
+        var self = this;
+        this.catastrophe_collection.fetch({
+            success: function() {
+                self.catastrophe_collection.trigger("fetched");
+            },
+            error: function() {
+                console.log("Couldn't retrieve...");
+            }
+        });
+    }
+});
+
 $(function() {
-    window.clock_view = new ClockView({el: $("#clock-view-el")});
+    window.clock_viev = new ContainerView({el: "#container-el"});
 });
