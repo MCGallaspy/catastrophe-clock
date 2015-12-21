@@ -3,14 +3,65 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link>
-    <title></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Catastrophe Countdown</title>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
     <link rel="stylesheet" type="text/css" href="{% static 'bootstrap-3.3.6-dist/css/bootstrap.min.css' %}" />
     <link rel="stylesheet" type="text/css" href="{% static 'bootstrap-3.3.6-dist/css/bootstrap-theme.min.css' %}" />
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
     <script type="text/javascript" src="{% static 'bootstrap-3.3.6-dist/js/bootstrap.min.js' %}"></script>
+
+    <link rel="stylesheet" type="text/css" href="{% static 'catastrophe_clock/css/catastrophe_clock.css' %}" />
 </head>
 <body>
-A CLOCK WILL GO HERE!
+<div class="container text-center">
+    <div class="panel panel-catastrophe">
+        <div class="row">
+            <div class="col-sm-12">
+                <h1>Catastrophe Countdown</h1>
+            </div>
+        </div>
+
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-sm-12">
+                    <h2>You have</h2>
+                </div>
+                <div class="col-sm-12">
+                    The timer goes here.
+                </div>
+                <div class="col-sm-12">
+                    <h2>until</h2>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-5 col-sm-offset-2">
+                    <h3>The global average temperature reaches</h3>
+                </div>
+                <div class="col-sm-3">
+                    <h3 class="dropdown">
+                        <button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                            X° F
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                            <li><a href="#">Y° F</a></li>
+                        </ul>
+                    </h3>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-12">
+                    <a href="#">
+                        Click here to find out more.
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>

@@ -1,0 +1,15 @@
+body {
+    background-color: black;
+}
+
+.panel-catastrophe {
+    background-color: #ff0000;
+    color: black;
+}
+
+.panel-catastrophe .panel-body {
+    border: solid black 1px;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+}
