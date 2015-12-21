@@ -7,6 +7,7 @@ from .models import Catastrophe
 class CatastropheSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Catastrophe
+        fields = ('name', 'description', 'arrival_date', 'url', )
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
