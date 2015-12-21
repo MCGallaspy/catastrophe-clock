@@ -78,8 +78,8 @@ var ClockView = Backbone.View.extend({
 
 var DescriptionView = Backbone.View.extend({
     initialize: function(options){
-        _.bindAll(this, "render")
-        this.model = options.model || new Backbone.Model()
+        _.bindAll(this, "render");
+        this.model = options.model || new Backbone.Model();
         this.listenTo(this.model, "change", this.render);
         this.render()
     },
@@ -89,12 +89,41 @@ var DescriptionView = Backbone.View.extend({
     }
 });
 
+var FindOutMoreView = Backbone.View.extend({
+    events: {
+        "click a": "toggle"
+    },
+
+    initialize: function (options) {
+        _.bindAll(this, "render", "toggle");
+        this.model = options.model || new Backbone.Model({more_info: "None available at the moment."});
+        this.toggled = false;
+        this.listenTo(this.model, "change:more_info", this.render);
+    },
+
+    toggle: function() {
+        this.toggled = !this.toggled;
+        this.render();
+    },
+
+    render: function() {
+        if( this.toggled ) {
+            this.$("a").text("Click here to close this description.");
+            this.$(".find-out-more").html(this.model.get("more_info"));
+        } else {
+            this.$("a").text("Click here to find out more.");
+            this.$(".find-out-more").html("");
+        }
+    }
+});
+
 var ContainerView = Backbone.View.extend({
     initialize: function() {
         _.bindAll(this, "update_subviews");
         this.catastrophe_collection = new CatastropheCollection();
         this.clock_view = new ClockView({el: this.$("#clock-view-el")});
         this.desc_view = new DescriptionView({el: this.$("#desc-el")});
+        this.find_out_more_view = new FindOutMoreView({el: this.$("#more-info-el")});
         this.fetch_catastrophe_collection();
     },
 
@@ -102,6 +131,7 @@ var ContainerView = Backbone.View.extend({
         var catastrophe_model = this.catastrophe_collection.findWhere({name: "Miami sinks"});
         this.clock_view.catastrophe_model.set(catastrophe_model.attributes);
         this.desc_view.model.set({description: catastrophe_model.get("description")});
+        this.find_out_more_view.model.set({more_info: catastrophe_model.get("more_info")});
     },
 
     fetch_catastrophe_collection: function() {

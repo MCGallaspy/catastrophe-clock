@@ -16,3 +16,7 @@ class Catastrophe(models.Model):
         help_text="A brief description of the catastrophe, this populates the 'until' part of the page.",
         blank=True
     )
+    more_info = models.TextField(
+        help_text="An extended description of this catastrophe, including how the countdown was determined.",
+        blank=True
+    )
