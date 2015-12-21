@@ -13,6 +13,11 @@
     <script type="text/javascript" src="{% static 'bootstrap-3.3.6-dist/js/bootstrap.min.js' %}"></script>
 
     <link rel="stylesheet" type="text/css" href="{% static 'catastrophe_clock/css/catastrophe_clock.css' %}" />
+
+    <script type="text/javascript" src="{% static 'backbone/js/underscore-min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'backbone/js/backbone-min.js' %}"></script>
+
+    <script type="text/javascript" src="{% static 'catastrophe_clock/js/catastrophe_clock.js' %}"></script>
 </head>
 <body>
 <div class="container text-center">
@@ -30,7 +35,7 @@
                 </div>
                 <div class="col-xs-12">
                     <span class="clock panel h1">
-                        <strong>DDDD:HH:MM:SS</strong>
+                        <strong id="clock-view-el">DDDD:HH:MM:SS</strong>
                     </span>
                 </div>
                 <div class="col-sm-12">
