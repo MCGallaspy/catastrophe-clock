@@ -25,3 +25,7 @@ body {
 #chooser-el {
     position: relative;
 }
+
+.legend {
+    margin-top: 0.5em;
+}
