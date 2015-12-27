@@ -36,7 +36,7 @@ class Command(BaseCommand):
 
         zero_dates = filter(lambda x: x[0] > datetime.date.today(), zero_dates)
         max_el = max(zero_dates, key=lambda x: x[0])
-        logger.info("The last reservoir ({}) will dry out on: " .format(max_el[1].station_id) + repr(max_el))
+        logger.info("The last reservoir ({}) will dry out on: " .format(max_el[1].station_id) + repr(max_el[0]))
 
         from catastrophe_clock.models import Catastrophe  # import here to avoid error loading django w/ multiprocessing
         Catastrophe.objects.get_or_create(
@@ -64,7 +64,7 @@ def get_stations() -> [Station]:
     The `storages` property must still be filled.
     :return: A list of Station objects.
     """
-    blacklist = ["own"]  # station_ids to exclude, for various reasons
+    blacklist = ["OWN"]  # station_ids to exclude, for various reasons
     resp = requests.get("http://cdec.water.ca.gov/misc/daily_res.html")
     soup = BeautifulSoup(resp.content, "html.parser")
     trs = soup.find_all("tr")
@@ -74,7 +74,7 @@ def get_stations() -> [Station]:
             continue
         station_name = tr.td.a.text
         station_id = tr.td.next_sibling.next_sibling.b.text
-        if station_id not in blacklist:
+        if station_id.upper() not in blacklist:
             stations.append(Station(station_id, [], station_name))
     return stations
 
