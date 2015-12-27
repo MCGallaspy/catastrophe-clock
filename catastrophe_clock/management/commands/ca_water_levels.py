@@ -26,7 +26,7 @@ class Command(BaseCommand):
         with multiprocessing.Pool(processes=4) as pool:
             zero_dates = pool.map(_worker, stations)
 
-        zero_dates = filter(lambda x: x is not None, zero_dates)
+        zero_dates = list(filter(lambda x: x is not None, zero_dates))
 
         for zd, st in zero_dates:
             if zd > datetime.date.today():
@@ -34,14 +34,14 @@ class Command(BaseCommand):
             else:
                 logger.info(st.station_name + "(" + st.station_id + ") isn't drying out just yet: " + repr(zd))
 
-        zero_dates = filter(lambda date: date > date.date.today(), zero_dates)
-        arrival = max(zero_dates)
-        logger.info("The last reservoir will dry out on: " + repr(arrival))
+        zero_dates = filter(lambda x: x[0] > datetime.date.today(), zero_dates)
+        max_el = max(zero_dates, key=lambda x: x[0])
+        logger.info("The last reservoir ({}) will dry out on: " .format(max_el[1].station_id) + repr(max_el))
 
         from catastrophe_clock.models import Catastrophe  # import here to avoid error loading django w/ multiprocessing
         Catastrophe.objects.get_or_create(
             name="California dries up",
-            arrival_date=datetime.datetime(arrival.year, arrival.month, arrival.day)
+            arrival_date=datetime.datetime(max_el[0].year, max_el[0].month, max_el[0].day)
         )
 
 
@@ -64,6 +64,7 @@ def get_stations() -> [Station]:
     The `storages` property must still be filled.
     :return: A list of Station objects.
     """
+    blacklist = ["own"]  # station_ids to exclude, for various reasons
     resp = requests.get("http://cdec.water.ca.gov/misc/daily_res.html")
     soup = BeautifulSoup(resp.content, "html.parser")
     trs = soup.find_all("tr")
@@ -73,7 +74,8 @@ def get_stations() -> [Station]:
             continue
         station_name = tr.td.a.text
         station_id = tr.td.next_sibling.next_sibling.b.text
-        stations.append(Station(station_id, [], station_name))
+        if station_id not in blacklist:
+            stations.append(Station(station_id, [], station_name))
     return stations
 
 
