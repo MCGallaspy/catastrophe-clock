@@ -39,10 +39,12 @@ class Command(BaseCommand):
         logger.info("The last reservoir ({}) will dry out on: " .format(max_el[1].station_id) + repr(max_el[0]))
 
         from catastrophe_clock.models import Catastrophe  # import here to avoid error loading django w/ multiprocessing
-        Catastrophe.objects.get_or_create(
-            name="California dries up",
-            arrival_date=datetime.datetime(max_el[0].year, max_el[0].month, max_el[0].day)
+        catastrophe, created = Catastrophe.objects.get_or_create(
+            name="California dries up"
         )
+        catastrophe.arrival_date = datetime.datetime(max_el[0].year, max_el[0].month, max_el[0].day)
+        catastrophe.save()
+
 
 
 def _worker(station):
@@ -64,7 +66,8 @@ def get_stations() -> [Station]:
     The `storages` property must still be filled.
     :return: A list of Station objects.
     """
-    blacklist = ["OWN"]  # station_ids to exclude, for various reasons
+    blacklist = ["OWN", "VAR", "BIL", "RBL", "KES",
+                 "GDW", "SLB", "NAT", "GLL"]  # station_ids to exclude, since they appear to have constant levels or are too noisy
     resp = requests.get("http://cdec.water.ca.gov/misc/daily_res.html")
     soup = BeautifulSoup(resp.content, "html.parser")
     trs = soup.find_all("tr")
