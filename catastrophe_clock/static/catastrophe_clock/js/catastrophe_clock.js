@@ -161,7 +161,7 @@ var ContainerView = Backbone.View.extend({
         var self = this;
         this.catastrophe_collection.fetch({
             success: function() {
-                self.catastrophe_model = self.catastrophe_collection.findWhere({name: "Miami sinks"});
+                self.catastrophe_model = self.catastrophe_collection.findWhere({name: "California dries up"});
                 self.update_subviews();
             },
             error: function() {
