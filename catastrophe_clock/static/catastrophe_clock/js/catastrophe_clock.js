@@ -144,7 +144,6 @@ var ContainerView = Backbone.View.extend({
         dropdown_menu.html("");
         this.catastrophe_collection.forEach(function(catastrophe){
             var li = $("<li></li>").addClass("dropdown-item");
-            console.log(catastrophe.cid);
             var a = $("<a href='#'>").attr("data-id", catastrophe.cid).text(catastrophe.get("name"));
             li.append(a);
             dropdown_menu.append(li);
