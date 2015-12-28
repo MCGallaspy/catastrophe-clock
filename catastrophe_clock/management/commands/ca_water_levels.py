@@ -32,7 +32,8 @@ class Command(BaseCommand):
             if zd > datetime.date.today():
                 logger.info(st.station_name + " will dry out on " + repr(zd))
             else:
-                logger.info(st.station_name + "(" + st.station_id + ") isn't drying out just yet: " + repr(zd))
+                logger.info(st.station_name + "(" + st.station_id + ") might dry out imminently, because we predicted "
+                                                                    "a date in the past" + repr(zd))
 
         zero_dates = filter(lambda x: x[0] > datetime.date.today(), zero_dates)
         max_el = max(zero_dates, key=lambda x: x[0])
@@ -66,8 +67,8 @@ def get_stations() -> [Station]:
     The `storages` property must still be filled.
     :return: A list of Station objects.
     """
-    blacklist = ["OWN", "VAR", "BIL", "RBL", "KES",
-                 "GDW", "SLB", "NAT", "GLL"]  # station_ids to exclude, since they appear to have constant levels or are too noisy
+    # blacklist contains station_ids to exclude, since they appear to have constant levels or are too noisy
+    blacklist = ["OWN", "VAR", "BIL", "RBL", "KES", "GDW", "SLB", "NAT", "GLL", "SLC"]
     resp = requests.get("http://cdec.water.ca.gov/misc/daily_res.html")
     soup = BeautifulSoup(resp.content, "html.parser")
     trs = soup.find_all("tr")
