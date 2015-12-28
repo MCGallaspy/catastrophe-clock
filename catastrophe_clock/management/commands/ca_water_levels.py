@@ -18,47 +18,38 @@ Storage = collections.namedtuple('Storage', ['date', 'level_af'])
 class Command(BaseCommand):
     def handle(self, *args, **options):
         """
-        Gets the historical storage levels (in acre-feet) for each reservoir in CA. Then estimates when all of them
-        will reach zero, using linear regression.
+        Gets the historical storage levels (in acre-feet) for each reservoir in CA, then estimates when CA will use up
+        all its water.
+
+        Aggregates total storage for across all reservoirs, then estimates the rate using linear regression, and
+        finally extrapolates when the total storage will reach zero.
         """
-        stations = get_storages(get_stations())
+        no_storage_stations = get_stations()
+        with multiprocessing.Pool(processes=int(len(no_storage_stations)/2)) as pool:
+            stations = pool.map(get_storage, no_storage_stations)
 
-        with multiprocessing.Pool(processes=4) as pool:
-            zero_dates = pool.map(_worker, stations)
+        stations = filter(lambda x: x is not None, stations)
+        meta_station = Station("META", [], "META")
+        for station in stations:
+            for storage in station.storages:
+                try:
+                    matches = list([s for s in meta_station.storages if s.date == storage.date])
+                    old_val = matches[0]
+                    assert len(matches) == 1
+                    ind = meta_station.storages.index(old_val)
+                    meta_station.storages[ind] = Storage(storage.date, old_val.level_af + storage.level_af)
+                except IndexError:
+                    meta_station.storages.append(Storage(storage.date, storage.level_af))
 
-        zero_dates = list(filter(lambda x: x is not None, zero_dates))
-
-        for zd, st in zero_dates:
-            if zd > datetime.date.today():
-                logger.info(st.station_name + " will dry out on " + repr(zd))
-            else:
-                logger.info(st.station_name + "(" + st.station_id + ") might dry out imminently, because we predicted "
-                                                                    "a date in the past" + repr(zd))
-
-        zero_dates = filter(lambda x: x[0] > datetime.date.today(), zero_dates)
-        max_el = max(zero_dates, key=lambda x: x[0])
-        logger.info("The last reservoir ({}) will dry out on: " .format(max_el[1].station_id) + repr(max_el[0]))
+        zero_date = get_zero_date(meta_station)
+        logger.info("Based on current rates the reservoirs will dry up on: {}" .format(zero_date))
 
         from catastrophe_clock.models import Catastrophe  # import here to avoid error loading django w/ multiprocessing
         catastrophe, created = Catastrophe.objects.get_or_create(
             name="California dries up"
         )
-        catastrophe.arrival_date = datetime.datetime(max_el[0].year, max_el[0].month, max_el[0].day)
+        catastrophe.arrival_date = datetime.datetime(zero_date.year, zero_date.month, zero_date.day)
         catastrophe.save()
-
-
-
-def _worker(station):
-    """
-    Used for our pool, but can't be a local object to the class, or something, because it must be pickleable.
-    """
-    try:
-        return get_zero_date(station), station
-    except ValueError as e:
-        logger.error("Couldn't calculate a zero date for {sn} ({sid}).".format(sn=station.station_name,
-                                                                               sid=station.station_id))
-        logger.error(e)
-        return None
 
 
 def get_stations() -> [Station]:
@@ -68,7 +59,7 @@ def get_stations() -> [Station]:
     :return: A list of Station objects.
     """
     # blacklist contains station_ids to exclude, since they appear to have constant levels or are too noisy
-    blacklist = ["OWN", "VAR", "BIL", "RBL", "KES", "GDW", "SLB", "NAT", "GLL", "SLC"]
+    blacklist = []
     resp = requests.get("http://cdec.water.ca.gov/misc/daily_res.html")
     soup = BeautifulSoup(resp.content, "html.parser")
     trs = soup.find_all("tr")
@@ -83,7 +74,7 @@ def get_stations() -> [Station]:
     return stations
 
 
-def get_storage(station : Station, start_date=datetime.date(2012, 1, 1)) -> Station:
+def real_get_storage(station: Station, start_date=datetime.date(2012, 1, 1)) -> Station:
     """
     Takes a Station object and populates the `storages` property. Returns a new Station.
     Returns data from 2012 to present.
@@ -137,21 +128,20 @@ def _parse_raw_data(raw_data):
     return storages
 
 
-def get_storages(stations: [Station]) -> [Station]:
+def get_storage(station: Station) -> Station:
     """
-    Takes a list of Stations and populates the `storages` property. Returns a new list
-    :param stations: A list of Stations to populate
-    :return: A new list of Stations
+    Takes a Station and returns a new Station with its `storages` populated.
+    Meant to play nicely with multiprocessing.Pool.map.
+    :param stations: A Station to populate
+    :return: A new Station
     """
-    new_stations = []
-    for station in stations:
-        try:
-            new_stations.append(get_storage(station))
-        except ValueError as e:
-            logger.error("Unable to get storage data for {sn} ({sid}).".format(sn=station.station_name,
-                                                                               sid=station.station_id))
-            logger.error(e)
-    return new_stations
+    try:
+        return real_get_storage(station)
+    except ValueError as e:
+        logger.error("Unable to get storage data for {sn} ({sid}).".format(sn=station.station_name,
+                                                                           sid=station.station_id))
+        logger.error(e)
+        return None
 
 
 def get_zero_date(station):
@@ -167,6 +157,4 @@ def get_zero_date(station):
     if rate > 0:
         raise ValueError("Rate must be negative.")
     zero_date_ord = int(-1*intercept / rate)
-    zero_date = datetime.date.fromordinal(zero_date_ord)
-    line = [rate*dates_ord[i] + intercept for i in range(0, len(dates_ord))]
-    return zero_date
+    return datetime.date.fromordinal(zero_date_ord)
